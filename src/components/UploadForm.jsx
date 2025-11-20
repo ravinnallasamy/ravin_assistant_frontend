@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Upload } from 'lucide-react';
+import API_BASE_URL from '../config/api';
 
 const UploadForm = ({ type, onSuccess, password }) => {
     const [file, setFile] = useState(null);
@@ -17,7 +18,7 @@ const UploadForm = ({ type, onSuccess, password }) => {
         formData.append('password', password); // Send password for auth middleware
 
         try {
-            await axios.post('/api/admin/upload', formData, {
+            await axios.post(`${API_BASE_URL}/api/admin/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'x-admin-password': password

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import UploadForm from '../components/UploadForm';
 import EditForm from '../components/EditForm';
 import { ArrowLeft } from 'lucide-react';
+import API_BASE_URL from '../config/api';
 
 const AdminDashboard = () => {
     const [profile, setProfile] = useState(null);
@@ -29,13 +30,13 @@ const AdminDashboard = () => {
             // Let's check middleware first? No, I'll just try headers.
             // Actually, for GET requests, standard practice is headers.
 
-            const profileRes = await axios.get('/api/admin/profile', {
+            const profileRes = await axios.get(`${API_BASE_URL}/api/admin/profile`, {
                 headers: { 'x-admin-password': password }
             });
             setProfile(profileRes.data);
 
             // Fetch QnA history
-            const qnaRes = await axios.get('/api/admin/qna', {
+            const qnaRes = await axios.get(`${API_BASE_URL}/api/admin/qna`, {
                 headers: { 'x-admin-password': password }
             });
             setQnaHistory(qnaRes.data);
