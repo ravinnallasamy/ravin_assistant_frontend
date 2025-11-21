@@ -3,43 +3,55 @@ import { Mic, Square } from 'lucide-react';
 
 const VoiceRecordButton = ({ onRecordingComplete }) => {
     const [isRecording, setIsRecording] = useState(false);
-    const mediaRecorderRef = useRef(null);
-    const chunksRef = useRef([]);
+    const recognitionRef = useRef(null);
 
-    const startRecording = async () => {
+    const startRecording = () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorderRef.current = new MediaRecorder(stream);
-            chunksRef.current = [];
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Speech recognition not supported in this browser.");
+                return;
+            }
 
-            mediaRecorderRef.current.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    chunksRef.current.push(e.data);
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => setIsRecording(true);
+
+            recognition.onend = () => {
+                setIsRecording(false);
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                onRecordingComplete(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error", event.error);
+                setIsRecording(false);
+                if (event.error === 'not-allowed') {
+                    alert("Microphone access denied. Please allow microphone access.");
+                } else if (event.error !== 'no-speech') {
+                    // Ignore no-speech error as it just means silence
+                    alert("Speech recognition error: " + event.error);
                 }
             };
 
-            mediaRecorderRef.current.onstop = () => {
-                const blob = new Blob(chunksRef.current, { type: 'audio/webm' }); // or audio/mp4
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = () => {
-                    const base64Audio = reader.result.split(',')[1]; // Remove data:audio/webm;base64, prefix
-                    onRecordingComplete(base64Audio);
-                };
-            };
-
-            mediaRecorderRef.current.start();
-            setIsRecording(true);
+            recognition.start();
+            recognitionRef.current = recognition;
 
         } catch (error) {
             console.error('Error accessing microphone:', error);
-            alert("Unable to access microphone. Please ensure you have granted permission.");
+            setIsRecording(false);
         }
     };
 
     const stopRecording = () => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.stop) {
-            mediaRecorderRef.current.stop();
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
         }
         setIsRecording(false);
     };

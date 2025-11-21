@@ -30,35 +30,27 @@ const PublicHome = () => {
         }
     };
 
-    const handleAsk = async (textOverride, voiceBase64 = null) => {
+    const handleAsk = async (textOverride) => {
         const q = textOverride || question;
-        if (!q && !voiceBase64) return; // Allow empty text if voice is present
+        if (!q.trim()) return;
 
         setLoading(true);
         setAnswer('');
         setAudioUrl('');
 
         try {
-            const payload = {
+            const res = await axios.post(`${API_BASE_URL}/api/public/ask`, {
                 question: q,
-                voice: true // Always request audio
-            };
-
-            if (voiceBase64) {
-                payload.voiceBase64 = voiceBase64;
-                // If voice is provided, question text might be empty initially, backend will fill it
-            }
-
-            const res = await axios.post(`${API_BASE_URL}/api/public/ask`, payload);
+                voice: true // Always request audio as per requirements
+            });
 
             setAnswer(res.data.answer);
-            setAudioUrl(res.data.audioUrl);
+            setAudioUrl(res.data.audio); // Note: Backend returns 'audio', not 'audioUrl' based on publicController.js check
 
-            // If it was a voice query, update the question box with the transcribed text
+            // If backend returns a refined question, update it
             if (res.data.question) {
                 setQuestion(res.data.question);
             }
-
         } catch (error) {
             console.error('Error asking question:', error);
             setAnswer('Sorry, I encountered an error. Please try again.');
@@ -67,9 +59,9 @@ const PublicHome = () => {
         }
     };
 
-    const handleVoiceInput = (base64Audio) => {
-        // When voice is recorded, we send it directly
-        handleAsk('', base64Audio);
+    const handleVoiceInput = (text) => {
+        setQuestion(text);
+        handleAsk(text);
     };
 
     const handleAdminLogin = (password) => {
@@ -171,7 +163,7 @@ const PublicHome = () => {
                     <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Answer</h3>
                         <p className="text-slate-800 text-lg leading-relaxed">{answer}</p>
-                        <AudioAnswerPlayer audioUrl={audioUrl} />
+                        <AudioAnswerPlayer audioUrl={audioUrl} text={answer} />
                     </div>
                 )}
             </div>
