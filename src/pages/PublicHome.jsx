@@ -37,15 +37,53 @@ const PublicHome = () => {
         setAnswer('');
 
         try {
-            const res = await axios.post(`${API_BASE_URL}/api/public/ask`, {
-                question: q
+            const res = await fetch(`${API_BASE_URL}/api/public/ask`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: q }),
             });
 
-            setAnswer(res.data.answer);
+            if (!res.ok || !res.body) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Request failed');
+            }
 
-            // If backend returns a refined question, update it
-            if (res.data.question) {
-                setQuestion(res.data.question);
+            // The backend streams the answer as Server-Sent Events so text
+            // appears as it's generated instead of waiting for the full
+            // response — the spinner disappears on the first chunk.
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let firstChunkReceived = false;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const events = buffer.split('\n\n');
+                buffer = events.pop(); // keep any incomplete trailing event
+
+                for (const rawEvent of events) {
+                    const eventMatch = rawEvent.match(/^event: (.+)$/m);
+                    const dataMatch = rawEvent.match(/^data: (.+)$/m);
+                    if (!dataMatch) continue;
+
+                    const eventName = eventMatch ? eventMatch[1] : 'message';
+                    const data = JSON.parse(dataMatch[1]);
+
+                    if (eventName === 'chunk') {
+                        if (!firstChunkReceived) {
+                            firstChunkReceived = true;
+                            setLoading(false);
+                        }
+                        setAnswer((prev) => prev + data.delta);
+                    } else if (eventName === 'done') {
+                        if (data.question) setQuestion(data.question);
+                    } else if (eventName === 'error') {
+                        throw new Error(data.error || 'Streaming error');
+                    }
+                }
             }
         } catch (error) {
             console.error('Error asking question:', error);
