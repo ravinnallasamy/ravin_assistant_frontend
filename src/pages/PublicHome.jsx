@@ -12,7 +12,6 @@ const PublicHome = () => {
     const [profile, setProfile] = useState(null);
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
-    const [audioUrl, setAudioUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const navigate = useNavigate();
@@ -36,16 +35,13 @@ const PublicHome = () => {
 
         setLoading(true);
         setAnswer('');
-        setAudioUrl('');
 
         try {
             const res = await axios.post(`${API_BASE_URL}/api/public/ask`, {
-                question: q,
-                voice: true // Always request audio as per requirements
+                question: q
             });
 
             setAnswer(res.data.answer);
-            setAudioUrl(res.data.audio); // Note: Backend returns 'audio', not 'audioUrl' based on publicController.js check
 
             // If backend returns a refined question, update it
             if (res.data.question) {
@@ -163,7 +159,7 @@ const PublicHome = () => {
                     <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Answer</h3>
                         <p className="text-slate-800 text-lg leading-relaxed">{answer}</p>
-                        <AudioAnswerPlayer audioUrl={audioUrl} text={answer} />
+                        <AudioAnswerPlayer text={answer} />
                     </div>
                 )}
             </div>

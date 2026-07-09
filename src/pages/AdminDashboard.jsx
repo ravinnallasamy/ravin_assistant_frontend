@@ -96,12 +96,6 @@ const AdminDashboard = () => {
                                             </p>
                                         </div>
                                         <div className="p-3 bg-slate-50 rounded border border-slate-200">
-                                            <h3 className="font-medium text-slate-700 mb-1">LinkedIn Data</h3>
-                                            <p className="text-xs text-slate-500 whitespace-pre-wrap">
-                                                {profile.scraped_linkedin ? profile.scraped_linkedin.substring(0, 500) + '...' : 'No LinkedIn data scraped.'}
-                                            </p>
-                                        </div>
-                                        <div className="p-3 bg-slate-50 rounded border border-slate-200">
                                             <h3 className="font-medium text-slate-700 mb-1">Portfolio Data</h3>
                                             <p className="text-xs text-slate-500 whitespace-pre-wrap">
                                                 {profile.scraped_portfolio ? profile.scraped_portfolio.substring(0, 500) + '...' : 'No Portfolio data scraped.'}

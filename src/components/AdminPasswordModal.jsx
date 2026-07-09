@@ -16,7 +16,9 @@ const AdminPasswordModal = ({ isOpen, onClose, onLoginSuccess }) => {
         setError('');
 
         try {
-            await axios.post(`${API_BASE_URL}/api/admin/login`, { password });
+            await axios.post(`${API_BASE_URL}/api/admin/login`, { password }, {
+                headers: { 'x-admin-password': password }
+            });
             // If success
             onLoginSuccess(password); // Pass password to store in parent/context for future requests
             onClose();
